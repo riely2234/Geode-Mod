@@ -1,0 +1,36 @@
+name: Build from zip
+
+on:
+  push:
+    paths:
+      - "*.zip"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract uploaded zip
+        run: |
+          ZIP=$(find . -maxdepth 1 -name "*.zip" | head -n 1)
+          if [ -z "$ZIP" ]; then
+            echo "No zip found at repo root. Upload gd-mod-menu.zip to the root and push again."
+            exit 1
+          fi
+          echo "Extracting $ZIP"
+          mkdir -p extracted
+          unzip -o "$ZIP" -d extracted
+
+      - name: Build the mod
+        uses: geode-sdk/build-geode-mod@main
+        with:
+          target: Android64
+          path: extracted/gd-mod-menu
+
+      - name: Upload .geode file
+        uses: actions/upload-artifact@v4
+        with:
+          name: gd-mod-menu
+          path: extracted/gd-mod-menu/build/**/*.geode
